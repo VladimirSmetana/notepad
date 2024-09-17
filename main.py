@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
 
+current_file_path = None
 
 def chenge_theme(theme):
     text_fild['bg'] = view_colors[theme]['text_bg']
@@ -25,10 +26,12 @@ def change_font_size(event):
         text_fild.config(font=("Arial", new_size))
 
 
-def notepad_exit():
+def notepad_exit(window):
     answer = messagebox.askokcancel('Выход', 'Вы точно хотите выйти?')
     if answer:
-        root.destroy()
+        window.destroy()
+
+    
 
 def open_new_window():
     new_window = Toplevel(root)
@@ -54,7 +57,7 @@ def open_new_window():
     file_menu.add_command(label='Открыть', command=open_file)
     file_menu.add_command(label='Сохранить', command=save_file)
     file_menu.add_separator()
-    file_menu.add_command(label='Закрыть', command=notepad_exit)
+    file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(new_window))
     new_menu.add_cascade(label='Файл', menu=file_menu)
     # Вид
     view_menu = Menu(new_menu, tearoff=0)
@@ -74,19 +77,32 @@ def open_new_window():
 
 
 def open_file():
+    global current_file_path
     file_path = filedialog.askopenfilename(title='Выбор файла', filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
+        current_file_path = file_path
         text_fild.delete('1.0', END)
-        text_fild.insert('1.0', open(file_path, encoding='utf-8').read())
-
+        with open(file_path, encoding='utf-8') as file:
+            text_fild.insert('1.0', file.read())
 
 def save_file():
-    file_path = filedialog.asksaveasfilename(filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
-    f = open(file_path, 'w', encoding='utf-8')
-    text = text_fild.get('1.0', END)
-    f.write(text)
-    f.close()
+    global current_file_path
+    if current_file_path:
+        with open(current_file_path, 'w', encoding='utf-8') as file:
+            text = text_fild.get('1.0', END)
+            file.write(text)
+    else:
+        save_file_as()
 
+
+def save_file_as():
+    global current_file_path
+    file_path = filedialog.asksaveasfilename(filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
+    if file_path:
+        current_file_path = file_path
+        with open(file_path, 'w', encoding='utf-8') as file:
+            text = text_fild.get('1.0', END)
+            file.write(text)
 
 root = Tk()
 root.title('Текстовый редактор')
@@ -102,7 +118,8 @@ file_menu.add_command(label="Создать", command=open_new_window)
 file_menu.add_command(label='Открыть', command=open_file)
 file_menu.add_command(label='Сохранить', command=save_file)
 file_menu.add_separator()
-file_menu.add_command(label='Закрыть', command=notepad_exit)
+file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(root))
+root.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(root)) 
 root.config(menu=file_menu)
 
 # Вид
