@@ -4,6 +4,13 @@ from tkinter import filedialog
 
 current_file_path = None
 
+
+def update_title():
+    if current_file_path:
+        root.wm_title(f"Редактор - {current_file_path}")
+    else:
+        root.wm_title("Редактор")
+
 def chenge_theme(theme):
     text_fild['bg'] = view_colors[theme]['text_bg']
     text_fild['fg'] = view_colors[theme]['text_fg']
@@ -33,7 +40,7 @@ def notepad_exit(window):
 
     
 
-def open_new_window():
+def open_new_window(event=None):
     new_window = Toplevel(root)
     new_window.title("Новое окно")
     new_window.geometry(root.geometry())  # Копируем размер основного окна
@@ -76,7 +83,7 @@ def open_new_window():
     new_window.config(menu=new_menu)
 
 
-def open_file():
+def open_file(event=None):
     global current_file_path
     file_path = filedialog.askopenfilename(title='Выбор файла', filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
@@ -84,13 +91,15 @@ def open_file():
         text_fild.delete('1.0', END)
         with open(file_path, encoding='utf-8') as file:
             text_fild.insert('1.0', file.read())
+        update_title()
 
-def save_file():
+def save_file(event=None):
     global current_file_path
     if current_file_path:
         with open(current_file_path, 'w', encoding='utf-8') as file:
             text = text_fild.get('1.0', END)
             file.write(text)
+        update_title()
     else:
         save_file_as()
 
@@ -103,6 +112,7 @@ def save_file_as():
         with open(file_path, 'w', encoding='utf-8') as file:
             text = text_fild.get('1.0', END)
             file.write(text)
+        update_title()
 
 root = Tk()
 root.title('Текстовый редактор')
@@ -175,8 +185,10 @@ text_fild = Text(f_text,
                  selectbackground='#8D917A',
                  spacing3=10,
                  width=30,
-                 font='Arial 14'
+                 font='Arial 14',
+                 undo=True
                  )
+                 
 text_fild.pack(expand=1, fill=BOTH, side=LEFT)
 
 scroll = Scrollbar(f_text, command=text_fild.yview)
@@ -190,4 +202,13 @@ text_fild.bind("<MouseWheel>", change_font_size)
 # open_window_button = Tk.Button(root, text="Создать", command=open_new_window)
 # open_window_button.pack(pady=10)
 
+def bind_shortcuts():
+    root.bind('<Control-s>', save_file)
+    root.bind('<Control-o>', open_file)
+    root.bind('<Control-n>', open_new_window)
+    root.bind('<Control-z>', lambda event: text_fild.edit_undo())
+    root.bind('<Control-y>', lambda event: text_fild.edit_redo())
+
+bind_shortcuts()
+update_title()
 root.mainloop()
