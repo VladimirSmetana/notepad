@@ -5,11 +5,11 @@ from tkinter import filedialog
 current_file_path = None
 
 
-def update_title():
+def update_title(window):
     if current_file_path:
-        root.wm_title(f"Редактор - {current_file_path}")
+        window.wm_title(f"Редактор - {current_file_path}")
     else:
-        root.wm_title("Редактор")
+        window.wm_title("Редактор")
 
 def chenge_theme(theme):
     text_fild['bg'] = view_colors[theme]['text_bg']
@@ -77,8 +77,8 @@ def open_new_window(event=None):
     # Файл
     file_menu = Menu(new_menu, tearoff=0)
     file_menu.add_command(label="Создать", command=open_new_window)
-    file_menu.add_command(label='Открыть', command=open_file)
-    file_menu.add_command(label='Сохранить', command=save_file)
+    file_menu.add_command(label='Открыть', command= lambda: open_file(new_window))
+    file_menu.add_command(label='Сохранить', command= lambda: save_file(new_text_fild, new_window))
     file_menu.add_separator()
     file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(new_window))
     new_window.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(new_window))
@@ -104,7 +104,7 @@ def open_new_window(event=None):
     new_text_fild.bind("<Button-3>", show_popup)
 
 
-def open_file(event=None):
+def open_file(event=None, window=None):
     global current_file_path
     file_path = filedialog.askopenfilename(title='Выбор файла', filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
@@ -112,28 +112,28 @@ def open_file(event=None):
         text_fild.delete('1.0', END)
         with open(file_path, encoding='utf-8') as file:
             text_fild.insert('1.0', file.read())
-        update_title()
+        update_title(window)
 
-def save_file(event=None):
+def save_file(event=None, text_f=None, window=None):
     global current_file_path
     if current_file_path:
         with open(current_file_path, 'w', encoding='utf-8') as file:
-            text = text_fild.get('1.0', END)
+            text = text_f.get('1.0', END)
             file.write(text)
-        update_title()
+        update_title(window)
     else:
-        save_file_as()
+        save_file_as(text_f, window)
 
 
-def save_file_as():
+def save_file_as(text_f=None, window=None):
     global current_file_path
     file_path = filedialog.asksaveasfilename(filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
         current_file_path = file_path
         with open(file_path, 'w', encoding='utf-8') as file:
-            text = text_fild.get('1.0', END)
+            text = text_f.get('1.0', END)
             file.write(text)
-        update_title()
+        update_title(window)
 
 root = Tk()
 
@@ -200,8 +200,8 @@ text_fild.bind("<Button-3>", show_popup)
 # open_window_button.pack(pady=10)
 
 def bind_shortcuts():
-    root.bind('<Control-s>', save_file)
-    root.bind('<Control-o>', open_file)
+    root.bind('<Control-s>', lambda: save_file(text_fild, root))
+    root.bind('<Control-o>', lambda: open_file(root))
     root.bind('<Control-n>', open_new_window)
     root.bind('<Control-z>', lambda event: text_fild.edit_undo())
     root.bind('<Control-y>', lambda event: text_fild.edit_redo())
@@ -209,5 +209,5 @@ def bind_shortcuts():
 root.withdraw()
 open_new_window()
 bind_shortcuts()
-update_title()
+update_title(root)
 root.mainloop()
