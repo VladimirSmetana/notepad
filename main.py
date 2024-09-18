@@ -17,7 +17,15 @@ def chenge_theme(theme):
     text_fild['insertbackground'] = view_colors[theme]['cursor']
     text_fild['selectbackground'] = view_colors[theme]['select_bg']
 
+def show_popup(event):
+    popup_menu.tk_popup(event.x_root, event.y_root)
 
+def create_popup_menu(root):
+    popup_menu = Menu(root, tearoff=0)
+    popup_menu.add_command(label="Копировать")
+    popup_menu.add_command(label="Вставить")
+    popup_menu.add_command(label="Вырезать")
+    return popup_menu
 
 def chenge_fonts(fontss):
     text_fild['font'] = fonts[fontss]['font']
@@ -41,9 +49,17 @@ def notepad_exit(window):
     
 
 def open_new_window(event=None):
+    # Создаем главное окно, если оно еще не создано
+    if 'root' not in globals():
+        global root
+        root = Tk()
+        root.title('Текстовый редактор')
+        root.geometry('600x700')
+        root.iconbitmap('notepad.ico')
+    
     new_window = Toplevel(root)
-    new_window.title("Новое окно")
-    new_window.geometry(root.geometry())  # Копируем размер основного окна
+    new_window.geometry('600x700')
+    new_window.iconbitmap('notepad.ico')
 
     # Копируем виджеты из основного окна
     new_text_fild = Text(new_window, wrap='word', font=text_fild.cget("font"))
@@ -65,7 +81,9 @@ def open_new_window(event=None):
     file_menu.add_command(label='Сохранить', command=save_file)
     file_menu.add_separator()
     file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(new_window))
+    new_window.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(new_window))
     new_menu.add_cascade(label='Файл', menu=file_menu)
+
     # Вид
     view_menu = Menu(new_menu, tearoff=0)
     view_menu_sub = Menu(view_menu, tearoff=0)
@@ -78,9 +96,12 @@ def open_new_window(event=None):
     font_menu_sub.add_command(label='Comic Sans MS', command=lambda: chenge_fonts('CSMS'))
     font_menu_sub.add_command(label='Times New Roman', command=lambda: chenge_fonts('TNR'))
     view_menu.add_cascade(label='Шрифт...', menu=font_menu_sub)
+    
     new_menu.add_cascade(label='Вид', menu=view_menu)
 
     new_window.config(menu=new_menu)
+    popup_menu = create_popup_menu(new_window)
+    new_text_fild.bind("<Button-3>", show_popup)
 
 
 def open_file(event=None):
@@ -115,44 +136,20 @@ def save_file_as():
         update_title()
 
 root = Tk()
+
 root.title('Текстовый редактор')
 root.geometry('600x700')
 root.iconbitmap('notepad.ico')
 
 main_menu = Menu(root)
-
-
-# Файл
-file_menu = Menu(main_menu, tearoff=0)
-file_menu.add_command(label="Создать", command=open_new_window)
-file_menu.add_command(label='Открыть', command=open_file)
-file_menu.add_command(label='Сохранить', command=save_file)
-file_menu.add_separator()
-file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(root))
-root.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(root)) 
-root.config(menu=file_menu)
-
-# Вид
-view_menu = Menu(main_menu, tearoff=0)
-view_menu_sub = Menu(view_menu, tearoff=0)
-font_menu_sub = Menu(view_menu, tearoff=0)
-view_menu_sub.add_command(label='Тёмная', command=lambda: chenge_theme('dark'))
-view_menu_sub.add_command(label='Светлая', command=lambda: chenge_theme('light'))
-view_menu.add_cascade(label='Тема', menu=view_menu_sub)
-
-font_menu_sub.add_command(label='Arial', command=lambda: chenge_fonts('Arial'))
-font_menu_sub.add_command(label='Comic Sans MS', command=lambda: chenge_fonts('CSMS'))
-font_menu_sub.add_command(label='Times New Roman', command=lambda: chenge_fonts('TNR'))
-view_menu.add_cascade(label='Шрифт...', menu=font_menu_sub)
-root.config(menu=view_menu)
-
-# Добавление списков меню
-main_menu.add_cascade(label='Файл', menu=file_menu)
-main_menu.add_cascade(label='Вид', menu=view_menu)
 root.config(menu=main_menu)
 
+
+popup_menu = create_popup_menu(root)
 f_text = Frame(root)
 f_text.pack(fill=BOTH, expand=1)
+
+root.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(root))
 
 view_colors = {
     'dark': {
@@ -196,7 +193,7 @@ scroll.pack(side=LEFT, fill=Y)
 text_fild.config(yscrollcommand=scroll.set)
 
 text_fild.bind("<MouseWheel>", change_font_size)
-
+text_fild.bind("<Button-3>", show_popup)
 # Добавляем кнопку для открытия нового окна
 
 # open_window_button = Tk.Button(root, text="Создать", command=open_new_window)
@@ -209,6 +206,7 @@ def bind_shortcuts():
     root.bind('<Control-z>', lambda event: text_fild.edit_undo())
     root.bind('<Control-y>', lambda event: text_fild.edit_redo())
 
+open_new_window()
 bind_shortcuts()
 update_title()
 root.mainloop()
