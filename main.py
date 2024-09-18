@@ -5,17 +5,18 @@ from tkinter import filedialog
 current_file_path = None
 
 
-def update_title(window):
+def update_title():
     if current_file_path:
-        window.wm_title(f"Редактор - {current_file_path}")
+        new_window.wm_title(f"Редактор - {current_file_path}")
     else:
-        window.wm_title("Редактор")
+        new_window.wm_title("Редактор")
 
 def chenge_theme(theme):
-    text_fild['bg'] = view_colors[theme]['text_bg']
-    text_fild['fg'] = view_colors[theme]['text_fg']
-    text_fild['insertbackground'] = view_colors[theme]['cursor']
-    text_fild['selectbackground'] = view_colors[theme]['select_bg']
+    global new_text_fild
+    new_text_fild['bg'] = view_colors[theme]['text_bg']
+    new_text_fild['fg'] = view_colors[theme]['text_fg']
+    new_text_fild['insertbackground'] = view_colors[theme]['cursor']
+    new_text_fild['selectbackground'] = view_colors[theme]['select_bg']
 
 def show_popup(event):
     popup_menu.tk_popup(event.x_root, event.y_root)
@@ -28,17 +29,18 @@ def create_popup_menu(root):
     return popup_menu
 
 def chenge_fonts(fontss):
-    text_fild['font'] = fonts[fontss]['font']
+    global new_text_fild
+    new_text_fild['font'] = fonts[fontss]['font']
 
 def change_font_size(event):
-    # Проверяем, удерживается ли Ctrl
+    global new_text_fild
     if event.state & 0x4:
-        current_size = int(text_fild.cget("font").split()[1])
+        current_size = int(new_text_fild.cget("font").split()[1])
         if event.delta > 0:
             new_size = current_size + 1
         else:
             new_size = current_size - 1
-        text_fild.config(font=("Arial", new_size))
+        new_text_fild.config(font=("Arial", new_size))
 
 
 def notepad_exit(window):
@@ -51,19 +53,38 @@ def notepad_exit(window):
 def open_new_window(event=None):
     # Создаем главное окно, если оно еще не создано
     if 'root' not in globals():
-        global root
+        global root, text_fild, new_text_fild, new_window
         root = Tk()
         root.title('Текстовый редактор')
         root.geometry('600x700')
         root.iconbitmap('notepad.ico')
+        text_fild = Text(root, wrap='word')
+        text_fild.pack(expand=1, fill='both')
     
     new_window = Toplevel(root)
     new_window.geometry('600x700')
     new_window.iconbitmap('notepad.ico')
 
     # Копируем виджеты из основного окна
-    new_text_fild = Text(new_window, wrap='word', font=text_fild.cget("font"))
-    new_text_fild.pack(expand=1, fill='both')
+    nf_text = Frame(new_window)
+    nf_text.pack(fill=BOTH, expand=1)
+    new_text_fild = Text(nf_text,
+                 bg='#FFFACD',
+                 fg='black',
+                 padx=10,
+                 pady=10,
+                 wrap=WORD,
+                 insertbackground='brown',
+                 selectbackground='#8D917A',
+                 spacing3=10,
+                 width=30,
+                 font='Arial 14',
+                 undo=True,
+                 )
+    new_text_fild.pack(side=LEFT, fill=BOTH, expand=True)
+    scroll = Scrollbar(nf_text, command=new_text_fild.yview)
+    scroll.pack(side=LEFT, fill=Y)
+    new_text_fild.config(yscrollcommand=scroll.set)
 
     # Копируем настройки темы
     new_text_fild['bg'] = text_fild['bg']
@@ -77,8 +98,8 @@ def open_new_window(event=None):
     # Файл
     file_menu = Menu(new_menu, tearoff=0)
     file_menu.add_command(label="Создать", command=open_new_window)
-    file_menu.add_command(label='Открыть', command= lambda: open_file(new_window))
-    file_menu.add_command(label='Сохранить', command= lambda: save_file(new_text_fild, new_window))
+    file_menu.add_command(label='Открыть', command=open_file)
+    file_menu.add_command(label='Сохранить', command=save_file)
     file_menu.add_separator()
     file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(new_window))
     new_window.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(new_window))
@@ -101,39 +122,40 @@ def open_new_window(event=None):
 
     new_window.config(menu=new_menu)
     popup_menu = create_popup_menu(new_window)
-    new_text_fild.bind("<Button-3>", show_popup)
 
 
-def open_file(event=None, window=None):
-    global current_file_path
+    bind_shortcuts()
+
+def open_file(event=None):
+    global current_file_path, new_text_fild
     file_path = filedialog.askopenfilename(title='Выбор файла', filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
         current_file_path = file_path
-        text_fild.delete('1.0', END)
+        new_text_fild.delete('1.0', END)
         with open(file_path, encoding='utf-8') as file:
-            text_fild.insert('1.0', file.read())
-        update_title(window)
+            new_text_fild.insert('1.0', file.read())
+        update_title()
 
-def save_file(event=None, text_f=None, window=None):
-    global current_file_path
+def save_file(event=None):
+    global current_file_path, new_text_fild
     if current_file_path:
         with open(current_file_path, 'w', encoding='utf-8') as file:
-            text = text_f.get('1.0', END)
+            text = new_text_fild.get('1.0', END)
             file.write(text)
-        update_title(window)
+        update_title()
     else:
-        save_file_as(text_f, window)
+        save_file_as()
 
 
-def save_file_as(text_f=None, window=None):
-    global current_file_path
+def save_file_as():
+    global current_file_path, new_text_fild
     file_path = filedialog.asksaveasfilename(filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
         current_file_path = file_path
         with open(file_path, 'w', encoding='utf-8') as file:
-            text = text_f.get('1.0', END)
+            text = new_text_fild.get('1.0', END)
             file.write(text)
-        update_title(window)
+        update_title()
 
 root = Tk()
 
@@ -188,26 +210,25 @@ text_fild = Text(f_text,
                  
 text_fild.pack(expand=1, fill=BOTH, side=LEFT)
 
-scroll = Scrollbar(f_text, command=text_fild.yview)
-scroll.pack(side=LEFT, fill=Y)
-text_fild.config(yscrollcommand=scroll.set)
 
-text_fild.bind("<MouseWheel>", change_font_size)
-text_fild.bind("<Button-3>", show_popup)
+
 # Добавляем кнопку для открытия нового окна
 
 # open_window_button = Tk.Button(root, text="Создать", command=open_new_window)
 # open_window_button.pack(pady=10)
 
 def bind_shortcuts():
-    root.bind('<Control-s>', lambda: save_file(text_fild, root))
-    root.bind('<Control-o>', lambda: open_file(root))
-    root.bind('<Control-n>', open_new_window)
-    root.bind('<Control-z>', lambda event: text_fild.edit_undo())
-    root.bind('<Control-y>', lambda event: text_fild.edit_redo())
+    global new_text_fild
+    new_text_fild.bind('<Control-s>', save_file)
+    new_text_fild.bind('<Control-o>', open_file)
+    new_text_fild.bind('<Control-n>', open_new_window)
+    new_text_fild.bind('<Control-z>', lambda event: new_text_fild.edit_undo())
+    new_text_fild.bind('<Control-y>', lambda event: new_text_fild.edit_redo())
+    new_text_fild.bind("<Button-3>", show_popup)
+    new_text_fild.bind("<MouseWheel>", change_font_size)
 
 root.withdraw()
 open_new_window()
-bind_shortcuts()
-update_title(root)
+#bind_shortcuts()
+update_title()
 root.mainloop()
