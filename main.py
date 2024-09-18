@@ -206,6 +206,7 @@ def bind_shortcuts():
     root.bind('<Control-z>', lambda event: text_fild.edit_undo())
     root.bind('<Control-y>', lambda event: text_fild.edit_redo())
 
+root.withdraw()
 open_new_window()
 bind_shortcuts()
 update_title()
