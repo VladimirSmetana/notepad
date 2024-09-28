@@ -23,9 +23,9 @@ def show_popup(event):
 
 def create_popup_menu(root):
     popup_menu = Menu(root, tearoff=0)
-    popup_menu.add_command(label="Копировать")
-    popup_menu.add_command(label="Вставить")
-    popup_menu.add_command(label="Вырезать")
+    popup_menu.add_command(label="Копировать", command=lambda: root.clipboard_clear() or root.clipboard_append(new_text_fild.get("1.0", END)))
+    popup_menu.add_command(label="Вставить", command=lambda: new_text_fild.insert(INSERT, root.clipboard_get()))
+    popup_menu.add_command(label="Вырезать", command=lambda: root.clipboard_clear() or root.clipboard_append(new_text_fild.get("1.0", END)) or new_text_fild.delete("1.0", END))
     return popup_menu
 
 def chenge_fonts(fontss):
