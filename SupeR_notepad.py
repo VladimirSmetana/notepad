@@ -1,6 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
+import sys
 
 current_file_path = None
 
@@ -57,13 +58,13 @@ def open_new_window(event=None):
         root = Tk()
         root.title('Текстовый редактор')
         root.geometry('600x700')
-        root.iconbitmap('notepad.ico')
+        # root.wm_iconbitmap(r'C:\Users\smeta\OneDrive\Рабочий стол\notepad\notepad.ico')
         text_fild = Text(root, wrap='word')
         text_fild.pack(expand=1, fill='both')
     
     new_window = Toplevel(root)
     new_window.geometry('600x700')
-    new_window.iconbitmap('notepad.ico')
+    # new_window.wm_iconbitmap(r'C:\Users\smeta\OneDrive\Рабочий стол\notepad\notepad.ico')
 
     # Копируем виджеты из основного окна
     nf_text = Frame(new_window)
@@ -126,15 +127,20 @@ def open_new_window(event=None):
 
     bind_shortcuts()
 
-def open_file(event=None):
+def open_file(file_path=None):
     global current_file_path, new_text_fild
-    file_path = filedialog.askopenfilename(title='Выбор файла', filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
+    if file_path is None:
+        file_path = filedialog.askopenfilename(title='Выбор файла', filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
+    
     if file_path:
         current_file_path = file_path
         new_text_fild.delete('1.0', END)
-        with open(file_path, encoding='utf-8') as file:
-            new_text_fild.insert('1.0', file.read())
-        update_title()
+        try:
+            with open(file_path, encoding='utf-8') as file:
+                new_text_fild.insert('1.0', file.read())
+            update_title()
+        except Exception as e:
+            messagebox.showerror("Ошибка", f"Не удалось открыть файл: {e}")
 
 def save_file(event=None):
     global current_file_path, new_text_fild
@@ -161,7 +167,7 @@ root = Tk()
 
 root.title('Текстовый редактор')
 root.geometry('600x700')
-root.iconbitmap('notepad.ico')
+# root.wm_iconbitmap(r'C:\Users\smeta\OneDrive\Рабочий стол\notepad\notepad.ico')
 
 main_menu = Menu(root)
 root.config(menu=main_menu)
@@ -229,6 +235,12 @@ def bind_shortcuts():
 
 root.withdraw()
 open_new_window()
+
+if len(sys.argv) > 1:
+    file_path = sys.argv[1]
+    open_file(file_path)
+
+
 #bind_shortcuts()
 update_title()
 root.mainloop()
