@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
 import sys
@@ -49,6 +50,34 @@ def notepad_exit(window):
     if answer:
         window.destroy()
 
+def open_list(event=None):
+    def add_item():
+        box.insert(END, entry.get())
+        entry.delete(0, END)
+        
+    def del_list():
+        select = list(box.curselection())
+        select.reverse()
+        for i in select:
+            box.delete(i)
+
+    window = Tk()
+    window.title('Список задач')
+    box = Listbox(window, selectmode=EXTENDED, height = 10, width = 40, bg = '#FFFACD', selectborderwidth=3)
+    box.pack(side = LEFT)
+    scroll = Scrollbar(command=box.yview)
+    scroll.pack(side = LEFT, fill=Y)
+    box.config(yscrollcommand=scroll.set)
+    
+    f = Frame(window)   
+    f.pack(side = LEFT, padx=10)
+    entry = Entry(f)
+    entry.pack(anchor=N)
+    Button(f, text = '+', command = add_item, bg = 'blue', fg = 'white', borderwidth=3).pack(fill=X)
+    Button(f, text = '-', command = del_list, bg = 'red', fg = 'white', borderwidth=3).pack(fill=X)    
+    
+    window.mainloop()
+    
     
 
 def open_new_window(event=None):
@@ -105,6 +134,11 @@ def open_new_window(event=None):
     file_menu.add_command(label='Закрыть', command=lambda: notepad_exit(new_window))
     new_window.protocol("WM_DELETE_WINDOW", lambda: notepad_exit(new_window))
     new_menu.add_cascade(label='Файл', menu=file_menu)
+
+    # Задачи
+    file_menu = Menu(new_menu, tearoff=0)
+    file_menu.add_command(label="Список", command=open_list)
+    new_menu.add_cascade(label='Задачи', menu=file_menu)   
 
     # Вид
     view_menu = Menu(new_menu, tearoff=0)
