@@ -189,7 +189,7 @@ def save_file(event=None):
 
 def save_file_as():
     global current_file_path, new_text_fild
-    file_path = filedialog.asksaveasfilename(filetypes=(('Текстовые документы (*.txt)', '*.txt'), ('Все файлы', '*.*')))
+    file_path = filedialog.asksaveasfilename(defaultextension = '.txt', filetypes=(('Текстовые документы (.txt)', '*.txt'), ('Все файлы', '*.*')))
     if file_path:
         current_file_path = file_path
         with open(file_path, 'w', encoding='utf-8') as file:
